@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head >
+  <meta charset="UTF-8" />
+  <link rel="stylesheet" href="style.css" />
+
+  <title>Basic Payment Management System</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; }
+    .status-success { color: green; }
+    .status-failed { color: red; }
+    .transaction-item { cursor: pointer; padding: 8px; border-bottom: 1px solid #ccc; }
+    .transaction-item:hover { background: #f9f9f9; }
+    #details { margin-top: 20px; padding: 10px; border: 1px solid #ddd; background: #f5f5f5; }
+    button { margin-right: 10px; padding: 8px 12px; }
+  </style>
+</head>
+<body>
+
+  <h1>Basic Payment Management System</h1>
+
+  <div>
+    <button onclick="showDaily()">Daily Transactions</button>
+    <button onclick="showLast30()">Last 30 Days Transactions</button>
+  </div>
+
+  <div id="daily-section" style="margin-top: 20px;">
+    <label for="date-picker">Select Date:</label>
+    <input type="date" id="date-picker" onchange="renderDailyTransactions()" />
+    <div id="daily-list"></div>
+  </div>
+
+  <div id="last30-section" style="margin-top: 20px; display:none;">
+    <h3>Last 30 Days Transactions Summary</h3>
+    <div id="summary"></div>
+    <div id="last30-list"></div>
+  </div>
+
+  <div id="details"></div>
+
+  <script>
+    const transactions = [
+  { id: 1, amount: 100.00, date: '2025-05-22', status: 'success' },
+  { id: 2, amount: 50.25, date: '2025-05-21', status: 'failed' },
+  { id: 3, amount: 75.10, date: '2025-05-20', status: 'success' },
+  { id: 4, amount: 120.00, date: '2025-05-18', status: 'success' },
+  { id: 5, amount: 30.00, date: '2025-04-25', status: 'failed' },
+
+  { id: 6, amount: 95.50, date: '2025-05-19', status: 'success' },
+  { id: 7, amount: 60.00, date: '2025-05-17', status: 'failed' },
+  { id: 8, amount: 45.00, date: '2025-05-16', status: 'success' },
+  { id: 41, amount: 34.00, date: '2025-05-16', status: 'failed' },
+   { id: 42, amount: 340.00, date: '2025-05-16', status: 'failed' },
+  { id: 9, amount: 110.75, date: '2025-05-15', status: 'success' },
+  { id: 10, amount: 22.50, date: '2025-05-14', status: 'failed' },
+
+  { id: 11, amount: 88.80, date: '2025-05-13', status: 'success' },
+  { id: 12, amount: 15.00, date: '2025-05-12', status: 'failed' },
+  { id: 13, amount: 130.00, date: '2025-05-11', status: 'success' },
+  { id: 14, amount: 70.00, date: '2025-05-10', status: 'success' },
+  { id: 15, amount: 55.55, date: '2025-05-09', status: 'failed' },
+
+  { id: 16, amount: 90.00, date: '2025-05-08', status: 'success' },
+  { id: 17, amount: 40.25, date: '2025-05-07', status: 'failed' },
+  { id: 18, amount: 65.50, date: '2025-05-06', status: 'success' },
+  { id: 48, amount: 56.50, date: '2025-05-06', status: 'success' },
+  { id: 19, amount: 150.00, date: '2025-05-05', status: 'success' },
+  { id: 20, amount: 25.75, date: '2025-05-04', status: 'failed' },
+
+  { id: 21, amount: 85.00, date: '2025-05-03', status: 'success' },
+  { id: 22, amount: 33.00, date: '2025-05-02', status: 'failed' },
+  { id: 23, amount: 115.00, date: '2025-05-01', status: 'success' },
+  { id: 24, amount: 99.99, date: '2025-04-30', status: 'success' },
+  { id: 25, amount: 20.00, date: '2025-04-29', status: 'failed' },
+
+  { id: 26, amount: 72.50, date: '2025-04-28', status: 'success' },
+  { id: 27, amount: 18.00, date: '2025-04-27', status: 'failed' },
+  { id: 28, amount: 60.00, date: '2025-04-26', status: 'success' },
+  { id: 29, amount: 130.00, date: '2025-04-24', status: 'success' },
+  { id: 30, amount: 40.00, date: '2025-04-23', status: 'failed' },
+
+  { id: 31, amount: 77.75, date: '2025-04-22', status: 'success' },
+  { id: 32, amount: 50.00, date: '2025-04-21', status: 'failed' },
+  { id: 33, amount: 120.00, date: '2025-04-20', status: 'success' },
+  { id: 34, amount: 95.00, date: '2025-04-19', status: 'success' },
+  { id: 35, amount: 60.00, date: '2025-04-18', status: 'failed' },
+];
+
+
+    const dailySection = document.getElementById('daily-section');
+    const last30Section = document.getElementById('last30-section');
+    const dailyList = document.getElementById('daily-list');
+    const last30List = document.getElementById('last30-list');
+    const summary = document.getElementById('summary');
+    const details = document.getElementById('details');
+    const datePicker = document.getElementById('date-picker');
+
+    // Set default date picker value to today
+    datePicker.value = new Date().toISOString().split('T')[0];
+
+    function showDaily() {
+      dailySection.style.display = 'block';
+      last30Section.style.display = 'none';
+      details.innerHTML = '';
+      renderDailyTransactions();
+    }
+
+    function showLast30() {
+      dailySection.style.display = 'none';
+      last30Section.style.display = 'block';
+      details.innerHTML = '';
+      renderLast30Transactions();
+    }
+
+    function renderDailyTransactions() {
+      const selectedDate = datePicker.value;
+      const filtered = transactions.filter(t => t.date === selectedDate);
+      if(filtered.length === 0) {
+        dailyList.innerHTML = '<p>No transactions found for this date.</p>';
+        return;
+      }
+      dailyList.innerHTML = filtered.map(t =>
+        `<div class="transaction-item" onclick="showDetails(${t.id})">
+          <strong>Amount:</strong> $${t.amount.toFixed(2)} - 
+          <span class="${t.status === 'success' ? 'status-success' : 'status-failed'}">
+            ${t.status === 'success' ? 'Payment Successful' : 'Payment Failed'}
+          </span>
+        </div>`
+      ).join('');
+    }
+
+    function renderLast30Transactions() {
+      const today = new Date();
+      const past30 = new Date(today);
+      past30.setDate(past30.getDate() - 30);
+
+      const filtered = transactions.filter(t => {
+        const tDate = new Date(t.date);
+        return tDate >= past30 && tDate <= today;
+      });
+
+      if(filtered.length === 0) {
+        summary.innerHTML = '<p>No transactions in the last 30 days.</p>';
+        last30List.innerHTML = '';
+        return;
+      }
+
+      const total = filtered.length;
+      const successCount = filtered.filter(t => t.status === 'success').length;
+      const failedCount = filtered.filter(t => t.status === 'failed').length;
+
+      summary.innerHTML = `
+        <p>Total Transactions: ${total}</p>
+        <p>Successful: ${successCount}</p>
+        <p>Failed: ${failedCount}</p>
+      `;
+
+      last30List.innerHTML = filtered.map(t =>
+        `<div class="transaction-item" onclick="showDetails(${t.id})">
+          <strong>Date:</strong> ${t.date} - 
+          <strong>Amount:</strong> $${t.amount.toFixed(2)} - 
+          <span class="${t.status === 'success' ? 'status-success' : 'status-failed'}">
+            ${t.status === 'success' ? 'Payment Successful' : 'Payment Failed'}
+          </span>
+        </div>`
+      ).join('');
+    }
+
+    function showDetails(id) {
+      const t = transactions.find(tr => tr.id === id);
+      if(!t) return;
+      details.innerHTML = `
+        <h3>Transaction Details</h3>
+        <p><strong>ID:</strong> ${t.id}</p>
+        <p><strong>Amount:</strong> $${t.amount.toFixed(2)}</p>
+        <p><strong>Date:</strong> ${t.date}</p>
+        <p><strong>Status:</strong> <span class="${t.status === 'success' ? 'status-success' : 'status-failed'}">${t.status === 'success' ? 'Payment Successful' : 'Payment Failed'}</span></p>
+      `;
+    }
+
+    // Initialize with daily view
+    showDaily();
+
+  </script>
+</body>
+</html>
